@@ -79,8 +79,6 @@ quality_settings <- list(
 preservation_random_seed <- 12345
 ```
 
-The explicit random seed records the default seed used by `modulePreservation()` and makes the permutation analysis reproducible.
-
 ## Helper functions for expression matrices and module colors
 
 `modulePreservation()` matches features by column name. Cross-species comparisons therefore use only genes or pan-genome peaks present in both species, while internal quality checks use the complete feature set of each individual network.
@@ -312,7 +310,6 @@ extract_summary_statistics <- function(
 
 ## Build the within-reference quality table
 
-The table includes a direct indicator of whether `Zsummary.qual` exceeds 2. This makes the statement that all analyzed modules have quality scores above 2 directly verifiable from the supplementary output.
 
 ```r
 extract_internal_quality <- function(result, dataset_name) {
