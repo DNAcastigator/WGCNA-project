@@ -2,7 +2,6 @@
 
 This document describes the construction of four independent weighted networks: *H. erato* RNA-seq, *H. melpomene* RNA-seq, *H. erato* ATAC-seq, and *H. melpomene* ATAC-seq. The input matrices are the corrected, forewing-specific matrices produced in Parts 1 and 2, with samples in rows and genes or ATAC-seq peaks in columns.
 
-The code below retains the final network settings recoverable from the supplied scripts. Exploratory parameter searches, overwritten objects, individual candidate-gene queries, and plotting experiments were excluded. Cross-species module preservation is intentionally handled in Part 4.
 
 ## Required R package
 
@@ -41,14 +40,7 @@ input_files <- list(
 
 Soft-thresholding powers were evaluated over powers 1–10 and the even powers 12–30 with `pickSoftThreshold()`, using a signed-hybrid network and biweight midcorrelation. The selected power was the first value reaching a signed scale-free topology fit of at least 0.80. The powers used in the final downstream scripts were 18 and 20 for the *H. erato* and *H. melpomene* RNA networks, respectively, and 4 for both ATAC networks.
 
-The remaining module-detection settings reproduce the final RNA and ATAC network blocks. These values should also be reported in Supplementary Table S6.
-
-| Dataset | Power | Maximum block size | Minimum module size | Merge cut height | Deep split | Correlation | Network type |
-| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| *H. erato* RNA | 18 | 6,000 | 30 | 0.25 | 3 | bicor | signed hybrid |
-| *H. melpomene* RNA | 20 | 6,000 | 30 | 0.25 | 3 | bicor | signed hybrid |
-| *H. erato* ATAC | 4 | 6,000 | 30 | 0.30 | 3 | bicor | signed hybrid |
-| *H. melpomene* ATAC | 4 | 6,000 | 30 | 0.30 | 3 | bicor | signed hybrid |
+The remaining module-detection settings reproduce the final RNA and ATAC network blocks. 
 
 ```r
 network_parameters <- data.frame(
