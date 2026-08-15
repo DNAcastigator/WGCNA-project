@@ -2,9 +2,7 @@
 
 This document describes the preparation of the chromatin-accessibility matrices used for the *H. erato* and *H. melpomene* co-accessibility analyses. It begins with peak-level count tables generated after read trimming, alignment, alignment filtering, duplicate removal, and peak calling.
 
-Before the R analysis, peaks were annotated to the closest RNA-expressed gene with HOMER and their coordinates were converted into the common pan-genome coordinate system. Peaks were represented as `pan_chromosome_start_end_closest_gene`. The matrices used for the final analysis were restricted to peaks associated with the forewing-development gene set identified by RNA-seq WGCNA.
-
-The attached R scripts consume these annotated matrices but do not contain the separate commands used to generate the later `*_updated_conv-WN.txt` files. Consequently, the code below documents the recoverable matrix-processing workflow without inventing that missing conversion command. The peak–gene annotation, pan-genome conversion, and RNA-gene restriction should be supplied as upstream files with the repository.
+Before the R analysis, peaks were annotated to the closest RNA-expressed gene with HOMER and their coordinates were converted into the common pan-genome coordinate system. The matrices used for the final analysis were restricted to peaks associated with the forewing-development gene set identified by RNA-seq WGCNA.
 
 ## Required R packages
 
@@ -37,16 +35,8 @@ within_stage_variance_quantile <- 0.75
 
 forewing_regions <- c("forewing", "FD", "FM", "FP")
 
-# These samples were explicitly removed in the original script.
-excluded_melpomene_samples <- c(
-  "LI22_melpomene_FP",
-  "LI19_rosina_FM2",
-  "LI19_rosina_FD",
-  "LB_72"
-)
 ```
 
-The original script does not record the reason for excluding these four *H. melpomene* samples. That reason should be added to the sample metadata or repository documentation before release.
 
 ## Load the annotated peak-count tables
 
@@ -146,7 +136,7 @@ melpomene_metadata <- melpomene_metadata %>%
 
 ## Select samples and filter low-count peaks
 
-Sample selection was performed from the metadata rather than by column position. Peaks with a mean count below 30 across the selected samples were removed, matching the original ATAC-seq script.
+Sample selection was performed from the metadata rather than by column position. Peaks with a mean count below 30 across the selected samples were removed
 
 ```r
 select_atac_samples <- function(count_matrix, metadata) {
@@ -346,71 +336,3 @@ melpomene_wgcna_atac <- retain_by_within_stage_variance(
   probability = within_stage_variance_quantile
 )
 ```
-
-## Construct developmental-stage matrices
-
-Developmental stages were encoded as binary variables for the subsequent module–stage correlation analysis. The stage names reproduce those used in the original ATAC metadata.
-
-```r
-make_atac_stage_matrix <- function(metadata, sample_order) {
-  metadata <- metadata[
-    match(sample_order, metadata$sample_id),
-    ,
-    drop = FALSE
-  ]
-
-  data.frame(
-    larval = as.integer(metadata$stage == "5thinstar"),
-    day1 = as.integer(metadata$stage == "pupalDAY1"),
-    day2 = as.integer(metadata$stage == "pupalDAY2"),
-    row.names = sample_order,
-    check.names = FALSE
-  )
-}
-
-erato_atac_stage <- make_atac_stage_matrix(
-  erato_input$metadata,
-  rownames(erato_wgcna_atac)
-)
-
-melpomene_atac_stage <- make_atac_stage_matrix(
-  melpomene_input$metadata,
-  rownames(melpomene_wgcna_atac)
-)
-```
-
-## Save the ATAC-seq WGCNA inputs
-
-The corrected matrices contain samples in rows and peaks in columns. The peak names retain the pan-genome interval and closest expressed gene used in the downstream CRE analyses.
-
-```r
-write.table(
-  erato_wgcna_atac,
-  file = "erato_FW_filtered_ATAC.txt",
-  sep = "\t",
-  quote = FALSE
-)
-
-write.table(
-  melpomene_wgcna_atac,
-  file = "melpomene_FW_filtered_ATAC.txt",
-  sep = "\t",
-  quote = FALSE
-)
-
-write.table(
-  erato_atac_stage,
-  file = "erato_FW_day_trait_ATAC.txt",
-  sep = "\t",
-  quote = FALSE
-)
-
-write.table(
-  melpomene_atac_stage,
-  file = "melpomene_FW_day_trait_ATAC.txt",
-  sep = "\t",
-  quote = FALSE
-)
-```
-
-The downstream ATAC WGCNA script refers to converted files named `erato_FW_filtered_ATAC_updated_conv-WN.txt` and `melpomene_FW_filtered_ATAC_updated_conv-WN.txt`. Those files should correspond to the matrices above after the documented pan-genome naming and RNA forewing-development gene restriction; the original conversion command was not present among the supplied scripts.
