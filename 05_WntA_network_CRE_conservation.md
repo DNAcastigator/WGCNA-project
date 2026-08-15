@@ -2,36 +2,22 @@
 
 This document describes extraction of the *WntA*-centered RNA networks, cross-species comparison of *WntA* correlations, and integration with the structural and temporal conservation of associated cis-regulatory elements (CREs).
 
-The principal correction relative to the exploratory scripts is the synchronicity denominator:
+For each gene, CRE homology and synchronicity are calculated as follows:
 
-\[
-\text{synchronous CRE proportion}
-=
-\frac{N_{\text{synchronous homologous CREs}}}
-{N_{\text{homologous CREs}}}.
-\]
+`CRE homology = number of homologous CREs / total number of associated CREs`
 
-CRE homology remains a separate quantity:
+`CRE synchronicity = number of synchronous homologous CREs / number of homologous CREs`
 
-\[
-\text{homologous CRE proportion}
-=
-\frac{N_{\text{homologous CREs}}}
-{N_{\text{total associated CREs}}}.
-\]
+Synchronicity is assigned `NA` when a gene has no homologous CREs because no homologous elements are available for temporal comparison.
 
-Consequently, a gene without homologous CREs receives `NA`, rather than zero, for synchronicity because there are no homologous elements whose timing can be compared.
-
-## Consistency corrections incorporated here
-
-The code below also resolves several inconsistencies in the exploratory scripts:
+## Analysis specifications
 
 - The 99th-percentile threshold is calculated from the vector of TOM similarities between *WntA* and all other genes, not from the complete TOM.
 - The *WntA* self-comparison is excluded before thresholding.
 - Spearman p-values are adjusted once across the tested *WntA*–gene correlations within each species.
 - Missing or unsupported correlations remain `NA`; they are not replaced with zero before classifying correlations as identical.
 - Correlations are rounded only after statistical support has been determined.
-- Peak homology is read from `WGCNA_peaks_homology.txt`, rather than inferred from text within a peak identifier.
+- Peak homology is obtained from `WGCNA_peaks_homology.txt`.
 - Each ATAC peak receives one module and therefore at most one developmental-stage assignment.
 - Peaks with multiple homology-map rows are counted once in gene-level proportions.
 - Pairwise Kolmogorov–Smirnov p-values are reported both raw and Holm-adjusted within each metric and species.
@@ -72,34 +58,7 @@ module_trait_alpha <- 0.01
 wgcna_results <- readRDS(wgcna_object_file)
 ```
 
-## Resolve the WntA identifier
 
-The preprocessing in Part 1 standardizes the focal gene as `WntA`. The fallback names below allow the analysis to stop with an informative error if an older matrix is used.
-
-```r
-resolve_wnta_name <- function(feature_names) {
-  matches <- wnta_gene_candidates[
-    wnta_gene_candidates %in% feature_names
-  ]
-
-  if (length(matches) == 0) {
-    stop("No WntA identifier was found in the input matrix")
-  }
-
-  if ("WntA" %in% matches) {
-    return("WntA")
-  }
-
-  if (length(matches) > 1) {
-    stop(
-      "Multiple alternative WntA identifiers were found: ",
-      paste(matches, collapse = ", ")
-    )
-  }
-
-  matches
-}
-```
 
 ## Calculate RNA topological-overlap matrices
 
@@ -528,7 +487,7 @@ peak_homology <- resolve_peak_homology(
 )
 ```
 
-A peak absent from this explicit homology map is reported below as non-homologous. It should be called an indel-derived or lineage-specific sequence only when that status is supported by the upstream pan-genome interval annotation; mapping absence alone does not distinguish sequence absence from regulatory-peak turnover.
+A peak absent from this explicit homology map is reported below as non-homologous. 
 
 ## Classify CRE homology and temporal behavior
 
@@ -1018,5 +977,3 @@ saveRDS(
   )
 )
 ```
-
-The denominator columns are retained in `CRE_conservation_by_WntA_network_gene.tsv`. Thus every reported proportion can be reconstructed directly from the saved counts, and the corrected synchronicity formula can be verified without rerunning the analysis.
